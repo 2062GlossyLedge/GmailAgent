@@ -9,7 +9,10 @@ from typing import Any, List, Optional, Union
 from llama_index.core.readers.base import BaseReader
 from llama_index.core.schema import Document
 
-SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
+SCOPES = [
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/gmail.send",
+]
 
 # Copyright 2018 Google LLC
 #
@@ -35,7 +38,7 @@ class GoogleCalendarReader(BaseReader):
 
     def load_data(
         self,
-        number_of_results: Optional[int] = 10,
+        number_of_results: Optional[int] = 3,
         start_date: Optional[Union[str, datetime.date]] = None,
     ) -> List[Document]:
         """Load data from user's calendar.
