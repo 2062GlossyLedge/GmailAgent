@@ -77,78 +77,78 @@ retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"
 from langchain.tools.retriever import create_retriever_tool
 
 
-### Contextualize question ###
-# contextualize_q_system_prompt = """Given a chat history and the latest user question \
-# which might reference context in the chat history, formulate a standalone question \
-# which can be understood without the chat history. Do NOT answer the question, \
-# just reformulate it if needed and otherwise return it as is."""
-# contextualize_q_prompt = ChatPromptTemplate.from_messages(
-#     [
-#         ("system", contextualize_q_system_prompt),
-#         MessagesPlaceholder("chat_history"),
-#         ("human", "{input}"),
-#     ]
-# )
-# history_aware_retriever = create_history_aware_retriever(
-#     llm, retriever, contextualize_q_prompt
-# )
-# # helpful and friendly assistant for question-answering tasks for WikiWard - a spoiler free Wikipedia site.
-# ### Answer question ###
-# qa_system_prompt = """\
-# Use the following pieces of retrieved context to answer the question. \
-# If the retrieved context does not answer the question, just say you don't know. \
-# Use three sentences maximum and keep the answer concise.\
-# Context: {context}\n\nQuestion: {input}
-# """
+## Contextualize question ###
+contextualize_q_system_prompt = """Given a chat history and the latest user question \
+which might reference context in the chat history, formulate a standalone question \
+which can be understood without the chat history. Do NOT answer the question, \
+just reformulate it if needed and otherwise return it as is."""
+contextualize_q_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", contextualize_q_system_prompt),
+        MessagesPlaceholder("chat_history"),
+        ("human", "{input}"),
+    ]
+)
+history_aware_retriever = create_history_aware_retriever(
+    llm, retriever, contextualize_q_prompt
+)
+# helpful and friendly assistant for question-answering tasks for WikiWard - a spoiler free Wikipedia site.
+### Answer question ###
+qa_system_prompt = """\
+Use the following pieces of retrieved context to answer the question. \
+If the retrieved context does not answer the question, just say you don't know. \
+Use three sentences maximum and keep the answer concise.\
+Context: {context}\n\nQuestion: {input}
+"""
 
-# # print(qa_system_prompt)
-# qa_prompt = ChatPromptTemplate.from_messages(
-#     [
-#         ("system", qa_system_prompt),
-#         MessagesPlaceholder("chat_history"),
-#         ("human", "{input}"),
-#     ]
-# )
+# print(qa_system_prompt)
+qa_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", qa_system_prompt),
+        MessagesPlaceholder("chat_history"),
+        ("human", "{input}"),
+    ]
+)
 # this is where llm uses its model to answer the question
-# question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 
-# rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
+rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
 
-# # https://python.langchain.com/v0.1/docs/integrations/memory/sqlite/
-# chain_with_history = RunnableWithMessageHistory(
-#     rag_chain,
-#     # only use chat history from questions asked on the respective page
-#     lambda session_id: SQLChatMessageHistory(
-#         session_id=1,
-#         connection="sqlite:///sqlite.db",
-#     ),
-#     history_messages_key="chat_history",
-#     input_messages_key="input",
-#     output_messages_key="answer",
-# )
-# # This is where we configure the session id
-# config = {"configurable": {"session_id": 1}}
+# https://python.langchain.com/v0.1/docs/integrations/memory/sqlite/
+chain_with_history = RunnableWithMessageHistory(
+    rag_chain,
+    # only use chat history from questions asked on the respective page
+    lambda session_id: SQLChatMessageHistory(
+        session_id=1,
+        connection="sqlite:///sqlite.db",
+    ),
+    history_messages_key="chat_history",
+    input_messages_key="input",
+    output_messages_key="answer",
+)
+# This is where we configure the session id
+config = {"configurable": {"session_id": 1}}
 
-# query = "Create a summary for what am I doing on the day: 2024-08-29"
+query = "Create a summary for what am I doing on the day: 2024-08-29"
 
 
-# response = chain_with_history.invoke({"input": query}, config=config)["answer"]
+response = chain_with_history.invoke({"input": query}, config=config)["answer"]
 
-# print(response)
+print(response)
 
 from langchain.tools import Tool
 
 
-# tool = create_retriever_tool(
-#     retriever,
-#     "search_calendar_events",
-#     "Searches user made events in users calendar",
-# )
-# tools = [tool, gMailReader.gMailTools()]
+tool = create_retriever_tool(
+    retriever,
+    "search_calendar_events",
+    "Searches user made events in users calendar",
+)
+tools = [tool, gMailReader.gMailTools()]
 
 tools = gMailReader.gMailTools()
 
-# Define your tools dictionary
+# #Define your tools dictionary
 # tools = {
 #     "context": search_calendar_events_tool,
 #     "Gmail_tools": gMailReader.gMailTools(),  # Assuming this is a callable
@@ -167,25 +167,24 @@ from langchain import hub
 prompt = hub.pull("hwchase17/openai-tools-agent")
 prompt.messages
 
-# agent = create_openai_tools_agent(llm, tools, prompt)
+agent = create_openai_tools_agent(llm, tools, prompt)
 
-# agent_executor = AgentExecutor(
-#     agent=agent,
-#     tools=tools,
-#     # verbose=True,
-#     # handle_parsing_errors=True,
-#     # memory=chain_with_history,
-#     max_iterations=10,
-# )
-# print(formatted_documents)
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    # verbose=True,
+    # handle_parsing_errors=True,
+    # memory=chain_with_history,
+    max_iterations=10,
+)
+print(formatted_documents)
 
 # Create a single string that concatenates all the page_content values
 all_page_content = " ".join(document.page_content for document in formatted_documents)
 
-example_query = (
-    "send an Email to aysmith17@gmail.com of my next event given my schedule: "
-    + all_page_content
-)
+example_query = "create a draft to respond to the most recent email from aysmith17@icloud.com  on if I can schedule the appointment, given I don't have anything already planned at that time on  my schedule.  Don't write anything else in the mail, including who it's from "  # Don't put [Your Name] at the end of the mail, just put Ayden Smith . "
+
+
 # "Reply to the most recent email from aysmith17@gmail.com"
 # "draft to fake@fake.com a good morning email"
 
@@ -201,4 +200,4 @@ events = agent.stream(
 )
 for event in events:
     event["messages"][-1].pretty_print()
-# print(events)
+print(events)

@@ -17,7 +17,7 @@ class gMailReader:
         credentials = get_gmail_credentials(
             token_file="token.json",
             scopes=[
-                "https://www.googleapis.com/auth/gmail.send",
+                "https://mail.google.com/",
             ],
             client_secrets_file="credentials.json",
         )
